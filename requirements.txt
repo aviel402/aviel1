@@ -1,2 +1,43 @@
-Flask
-gunicorn
+FROM ubuntu:22.04
+
+# התקנת תלות בסיסיות
+RUN apt-get update && apt-get install -y \
+  git curl wget build-essential autoconf m4 libncurses5-dev libssl-dev \
+  libwxgtk3.0-gtk3-dev libgl1-mesa-dev libglu1-mesa-dev libpng-dev libssh-dev \
+  unixodbc-dev xsltproc fop libxml2-utils libncurses-dev openjdk-11-jdk \
+  curl unzip
+
+# התקנת asdf
+RUN git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.12.0
+
+# הוספת asdf ל PATH (bashrc)
+RUN echo '. $HOME/.asdf/asdf.sh' >> ~/.bashrc
+RUN echo '. $HOME/.asdf/completions/asdf.bash' >> ~/.bashrc
+
+SHELL ["/bin/bash", "-c"]
+RUN source ~/.bashrc
+
+# התקנת תוספים של erlang ו-elixir
+RUN ~/.asdf/bin/asdf plugin add erlang https://github.com/asdf-vm/asdf-erlang.git
+RUN ~/.asdf/bin/asdf plugin add elixir https://github.com/asdf-vm/asdf-elixir.git
+
+# התקנת גרסאות Erlang ו-Elixir הרצויות
+RUN ~/.asdf/bin/asdf install erlang 27.3
+RUN ~/.asdf/bin/asdf install elixir 1.18.4-otp-27
+
+# הגדרת גרסאות גלובליות
+RUN ~/.asdf/bin/asdf global erlang 27.3
+RUN ~/.asdf/bin/asdf global elixir 1.18.4-otp-27
+
+# הוספת asdf ל PATH עבור שאר הפקודות
+ENV PATH="/root/.asdf/shims:/root/.asdf/bin:${PATH}"
+
+# העתקת קוד המקור לתוך מכולה
+WORKDIR /app
+COPY . .
+
+# הרצת פקודת build או mix (אם יש)
+RUN mix deps.get
+RUN mix compile
+
+CMD ["iex", "-S", "mix"]
