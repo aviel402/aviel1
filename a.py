@@ -10,9 +10,9 @@ def yemot_calculator():
     yemot_commands = []
     params = request.form if request.form else request.args
 
-    # קבלת משתנים - שימו לב, אנחנו תמיד קוראים לנתונים שהתקבלו "digits"
+    # קבלת משתנים
     step = params.get("step", "1")
-    digits = params.get("digits", "") # כאן אנו מקבלים את קלט המשתמש
+    digits = params.get("digits", "") # קלט המשתמש
     callerid = params.get("ApiPhone", "") 
     path = params.get("path", "")
     
@@ -20,39 +20,40 @@ def yemot_calculator():
         yemot_commands.append("say=שגיאה. לא התקבל מספר מחייג")
         return Response("&".join(yemot_commands), mimetype='text/plain')
 
-    base = "/tmp/" + callerid + "_" + path.replace("/", "_")
+    # שינוי: שימוש בספרייה מקומית בשם temp_data במקום /tmp
+    # חובה ליצור את הספרייה הזו בתיקיית הפרויקט!
+    base = "./temp_data/" + callerid + "_" + path.replace("/", "_")
     num1_file = base + "_num1.txt"
     operation_file = base + "_op.txt"
     
     # שלב 1 – קבלת מספר ראשון
     if step == "1":
         if not digits:
-            # תיקון: אנו מבקשים מימות להחזיר את הקלט תחת השם "digits"
             yemot_commands.append("read=t-הקש את המספר הראשון=digits")
         else:
             with open(num1_file, "w") as f:
                 f.write(digits)
-            yemot_commands.append(f"go_to_folder=/yemot?step=2")
+            # מעבר לשלב הבא
+            yemot_commands.append("go_to_folder=/yemot?step=2")
 
     # שלב 2 – קבלת פעולה
     elif step == "2":
         if not digits or digits not in ["1", "2", "3", "4"]:
-             # תיקון: אנו מבקשים מימות להחזיר את הקלט תחת השם "digits"
             yemot_commands.append("read=t-בחר את הפעולה. 1 לחיבור, 2 לחיסור, 3 לכפל, 4 לחילוק=digits,1,1")
         else:
             with open(operation_file, "w") as f:
                 f.write(digits)
+            # מעבר לשלב הבא
             yemot_commands.append("go_to_folder=/yemot?step=3")
 
     # שלב 3 – קבלת מספר שני וחישוב
     elif step == "3":
         if not digits:
-             # תיקון: אנו מבקשים מימות להחזיר את הקלט תחת השם "digits"
             yemot_commands.append("read=t-הקש את המספר השני=digits")
         else:
             try:
+                # הגנה למקרה שהקבצים נמחקו או לא נוצרו
                 if not os.path.exists(num1_file) or not os.path.exists(operation_file):
-                    # הגנה במקרה שהקבצים נמחקו או לא נוצרו
                     yemot_commands.append("say=שגיאה במערכת, אנא נסה שנית")
                     yemot_commands.append("go_to_folder=/yemot") # חזרה להתחלה
                 else:
@@ -66,23 +67,27 @@ def yemot_calculator():
                     elif op == "3": result_text = str(num1 * num2)
                     elif op == "4":
                         if num2 == 0: raise ZeroDivisionError
-                        result_text = str(num1 / num2)
+                        # שיפור: עיגול התוצאה לשתי ספרות אחרי הנקודה להקראה ברורה
+                        result = round(num1 / num2, 2)
+                        result_text = str(result)
 
-                    yemot_commands.append("say=התוצאה היא " + result_text)
+                    yemot_commands.append("id_list_message=t-התוצאה היא " + result_text)
                     yemot_commands.append("go_to_folder=hangup") # ניתוק בסיום
 
             except ZeroDivisionError:
-                yemot_commands.append("say=אי אפשר לחלק באפס")
+                yemot_commands.append("id_list_message=t-לא ניתן לחלק באפס")
                 yemot_commands.append("go_to_folder=hangup")
             except Exception as e:
+                # לדיבאגינג: הדפסת השגיאה ללוג של השרת
                 print(f"General error in calculation: {e}") 
-                yemot_commands.append("say=שגיאה כללית בחישוב")
+                yemot_commands.append("id_list_message=t-אירעה שגיאה כללית בחישוב")
                 yemot_commands.append("go_to_folder=hangup")
             finally:
-                # ניקוי הקבצים
+                # ניקוי הקבצים לאחר סיום החישוב
                 for f in [num1_file, operation_file]:
-                    if os.path.exists(f): os.remove(f)
+                    if os.path.exists(f): 
+                        os.remove(f)
                     
-    # בניית התגובה הסופית
+    # בניית התגובה הסופית לימות המשיח
     response_string = "&".join(yemot_commands)
-    return Response(response_string, mimetype='text/plain')
+    return Response(response_string, mimetype='text/plain; charset=UTF-8')
