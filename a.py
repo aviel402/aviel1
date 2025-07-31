@@ -1,4 +1,4 @@
-# העתק את כל הקוד הזה והדבק אותו בקובץ a.py
+# קוד מלא ומתוקן - עובד גם ללא שיחה מזוהה
 
 from flask import Flask, request, Response
 import os
@@ -13,18 +13,20 @@ def yemot_calculator():
     # קבלת משתנים
     step = params.get("step", "1")
     digits = params.get("digits", "") # קלט המשתמש
-    callerid = params.get("ApiPhone", "") 
-    path = params.get("path", "")
     
-    if not callerid:
-        yemot_commands.append("say=שגיאה. לא התקבל מספר מחייג")
+    # שינוי: שימוש ב-ApiCallId במקום ApiPhone
+    call_id = params.get("ApiCallId", "")
+    
+    if not call_id:
+        yemot_commands.append("say=שגיאה. לא התקבל מזהה שיחה")
         return Response("&".join(yemot_commands), mimetype='text/plain')
 
-    # שינוי: שימוש בספרייה מקומית בשם temp_data במקום /tmp
-    # חובה ליצור את הספרייה הזו בתיקיית הפרויקט!
-    base = "./temp_data/" + callerid + "_" + path.replace("/", "_")
+    # שימוש ב-call_id ליצירת שם קובץ ייחודי
+    base = "./temp_data/" + call_id
     num1_file = base + "_num1.txt"
     operation_file = base + "_op.txt"
+    
+    # ... שאר הקוד נשאר זהה ...
     
     # שלב 1 – קבלת מספר ראשון
     if step == "1":
@@ -33,7 +35,6 @@ def yemot_calculator():
         else:
             with open(num1_file, "w") as f:
                 f.write(digits)
-            # מעבר לשלב הבא
             yemot_commands.append("go_to_folder=/yemot?step=2")
 
     # שלב 2 – קבלת פעולה
@@ -43,7 +44,6 @@ def yemot_calculator():
         else:
             with open(operation_file, "w") as f:
                 f.write(digits)
-            # מעבר לשלב הבא
             yemot_commands.append("go_to_folder=/yemot?step=3")
 
     # שלב 3 – קבלת מספר שני וחישוב
@@ -52,10 +52,9 @@ def yemot_calculator():
             yemot_commands.append("read=t-הקש את המספר השני=digits")
         else:
             try:
-                # הגנה למקרה שהקבצים נמחקו או לא נוצרו
                 if not os.path.exists(num1_file) or not os.path.exists(operation_file):
                     yemot_commands.append("say=שגיאה במערכת, אנא נסה שנית")
-                    yemot_commands.append("go_to_folder=/yemot") # חזרה להתחלה
+                    yemot_commands.append("go_to_folder=/yemot")
                 else:
                     num1 = float(open(num1_file).read())
                     op = open(operation_file).read().strip()
@@ -67,27 +66,23 @@ def yemot_calculator():
                     elif op == "3": result_text = str(num1 * num2)
                     elif op == "4":
                         if num2 == 0: raise ZeroDivisionError
-                        # שיפור: עיגול התוצאה לשתי ספרות אחרי הנקודה להקראה ברורה
                         result = round(num1 / num2, 2)
                         result_text = str(result)
 
                     yemot_commands.append("id_list_message=t-התוצאה היא " + result_text)
-                    yemot_commands.append("go_to_folder=hangup") # ניתוק בסיום
+                    yemot_commands.append("go_to_folder=hangup")
 
             except ZeroDivisionError:
                 yemot_commands.append("id_list_message=t-לא ניתן לחלק באפס")
                 yemot_commands.append("go_to_folder=hangup")
             except Exception as e:
-                # לדיבאגינג: הדפסת השגיאה ללוג של השרת
                 print(f"General error in calculation: {e}") 
                 yemot_commands.append("id_list_message=t-אירעה שגיאה כללית בחישוב")
                 yemot_commands.append("go_to_folder=hangup")
             finally:
-                # ניקוי הקבצים לאחר סיום החישוב
                 for f in [num1_file, operation_file]:
                     if os.path.exists(f): 
                         os.remove(f)
                     
-    # בניית התגובה הסופית לימות המשיח
     response_string = "&".join(yemot_commands)
     return Response(response_string, mimetype='text/plain; charset=UTF-8')
