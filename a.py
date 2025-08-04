@@ -1,4 +1,4 @@
-# גרסה סופית ומתוקנת המשתמשת בכוכבית (*) כמפריד
+# גרסה סופית ושימושית - כולל הסבר על פעולות החשבון
 
 from flask import Flask, request, Response
 
@@ -12,14 +12,14 @@ def yemot_single_input_calculator_star():
 
     # אם המשתמש עוד לא הקיש כלום, נבקש ממנו את כל הקלט
     if not digits:
-        # שינוי: החלפנו "סולמית" ב"כוכבית" בהנחיה למשתמש
-        prompt = "t-לחישוב, הקש מספר ראשון, כוכבית, פעולת חשבון, כוכבית, מספר שני, וכוכבית לסיום"
+        # **** השינוי החשוב נמצא כאן! ****
+        # הוספנו את ההסבר על הפעולות להודעת הפתיחה
+        prompt = "t-שלום הגעת למחשבון,לחישוב, הקש מספר ראשון, כוכבית, פעולה, כוכבית, מספר שני, וכוכבית לסיום. לפעולות החשבון, הקש 1 לחיבור, 2 לחיסור, 3 לכפל, 4 לחילוק או 5 לחזקה ."
         yemot_commands.append(f"read={prompt}=digits")
     
     # אם קיבלנו קלט, ננסה לחשב אותו
     else:
         try:
-            # שינוי: נפרק את הקלט לפי כוכבית (*) במקום סולמית
             parts = digits.split('*')
             
             if len(parts) != 3:
@@ -43,7 +43,8 @@ def yemot_single_input_calculator_star():
                 else:
                     result = round(num1 / num2, 2)
                     result_text = str(result)
-            
+            elif op_str == "5":esult_text = str(num1 ** num2)
+
             yemot_commands.append("id_list_message=t-התוצאה היא " + result_text)
 
         except Exception as e:
