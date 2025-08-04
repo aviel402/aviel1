@@ -1,37 +1,38 @@
-# גרסה סופית ויציבה - מפרקת את ההודעה לחלקים כדי למנוע ניתוק אוטומטי
+# גרסה חדשה ומשופרת עם תפריט עזרה ייעודי לכוכבית
 
 from flask import Flask, request, Response
 
 app = Flask(__name__)
 
 @app.route('/yemot', methods=['POST', 'GET'])
-def yemot_single_input_calculator_stable():
+def yemot_calculator_with_help():
     yemot_commands = []
     params = request.values
     digits = params.get("digits", "")
 
+    # הגדרת ההודעות במקום אחד כדי שיהיה קל לערוך
+    main_prompt = "t-לחישוב, הקש מספר, כוכבית, פעולה, כוכבית, ומספר. לשמיעת רשימת הפעולות, הקש כוכבית."
+    help_prompt = "t-הפעולות הן: 1 לחיבור, 2 לחיסור, 3 לכפל, 4 לחילוק, או 5 לחזקה."
+
+    # --- הלוגיקה הראשית ---
+
+    # אם המשתמש עוד לא הקיש כלום (שיחה חדשה)
     if not digits:
-        # === שוברים את ההודעה הארוכה לכמה הודעות קצרות ===
-        prompt1 = "t-שלום וברוך הבא למחשבון"
-        prompt2 = "t-לחישוב, הקש מספר ראשון, כוכבית, פעולה, כוכבית, ומספר שני"
-        prompt3 = "t-הפעולות הן: 1 לחיבור, 2 חיסור, 3 כפל, 4 חילוק, 5 חזקה"
-        prompt4 = "t-בסיום, הקש כוכבית"
+        yemot_commands.append(f"read={main_prompt}=digits")
+    
+    # אם המשתמש ביקש עזרה
+    elif digits == '*':
+        yemot_commands.append(f"id_list_message={help_prompt}")
+        # אחרי העזרה, נחזור להודעה הראשית ונמתין לקלט
+        yemot_commands.append(f"read={main_prompt}=digits")
 
-        # מוסיפים את כל ההודעות לרשימת הפקודות
-        yemot_commands.append(f"id_list_message={prompt1}")
-        yemot_commands.append(f"id_list_message={prompt2}")
-        yemot_commands.append(f"id_list_message={prompt3}")
-        yemot_commands.append(f"id_list_message={prompt4}")
-
-        # אחרי שהשמענו הכל, עכשיו נבקש קלט
-        # הפקודה read ריקה מהודעה כי כבר השמענו אותה
-        yemot_commands.append("read==digits")
+    # אם המשתמש הקיש תרגיל לחישוב
     else:
         try:
             parts = digits.split('*')
             
             if len(parts) != 3:
-                raise ValueError("קלט לא תקין")
+                raise ValueError("קלט לא תקין, חייבים שני תווי כוכבית")
 
             num1_str, op_str, num2_str = parts
             
@@ -57,7 +58,7 @@ def yemot_single_input_calculator_stable():
 
         except Exception as e:
             print(f"Error processing input '{digits}': {e}")
-            yemot_commands.append("id_list_message=t-הקלט שהוקש אינו תקין, אנא נסה שנית")
+            yemot_commands.append("id_list_message=t-הקלט שהוקש אינו תקין")
         finally:
             yemot_commands.append("go_to_folder=hangup")
 
