@@ -27,7 +27,7 @@ def yemot_single_input_calculator_star():
 
             num1_str, op_str, num2_str = parts
             
-            if op_str not in ['1', '2', '3', '4']:
+            if op_str not in ['1', '2', '3', '4','5']:
                 raise ValueError("פעולת חשבון לא תקינה")
 
             num1 = float(num1_str)
