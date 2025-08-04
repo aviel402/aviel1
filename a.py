@@ -1,4 +1,4 @@
-# גרסה סופית ושימושית - כולל הסבר על פעולות החשבון
+# גרסה סופית ומתוקנת עם פעולת חזקה (5)
 
 from flask import Flask, request, Response
 
@@ -10,14 +10,9 @@ def yemot_single_input_calculator_star():
     params = request.values
     digits = params.get("digits", "")
 
-    # אם המשתמש עוד לא הקיש כלום, נבקש ממנו את כל הקלט
     if not digits:
-        # **** השינוי החשוב נמצא כאן! ****
-        # הוספנו את ההסבר על הפעולות להודעת הפתיחה
         prompt = "t-שלום הגעת למחשבון,לחישוב, הקש מספר ראשון, כוכבית, פעולה, כוכבית, מספר שני, וכוכבית לסיום. לפעולות החשבון, הקש 1 לחיבור, 2 לחיסור, 3 לכפל, 4 לחילוק או 5 לחזקה ."
         yemot_commands.append(f"read={prompt}=digits")
-    
-    # אם קיבלנו קלט, ננסה לחשב אותו
     else:
         try:
             parts = digits.split('*')
@@ -27,7 +22,8 @@ def yemot_single_input_calculator_star():
 
             num1_str, op_str, num2_str = parts
             
-            if op_str not in ['1', '2', '3', '4','5']:
+            # === תיקון 1: הוספנו את '5' לרשימת הפעולות התקינות ===
+            if op_str not in ['1', '2', '3', '4', '5']:
                 raise ValueError("פעולת חשבון לא תקינה")
 
             num1 = float(num1_str)
@@ -43,7 +39,8 @@ def yemot_single_input_calculator_star():
                 else:
                     result = round(num1 / num2, 2)
                     result_text = str(result)
-            elif op_str == "5":esult_text = str(num1 ** num2)
+            # === תיקון 2: תיקנו את טעות ההקלדה ל-result_text ===
+            elif op_str == "5": result_text = str(num1 ** num2)
 
             yemot_commands.append("id_list_message=t-התוצאה היא " + result_text)
 
