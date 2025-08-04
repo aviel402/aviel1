@@ -22,7 +22,7 @@ def yemot_single_input_calculator_star():
 
             num1_str, op_str, num2_str = parts
             
-            # === תיקון 1: הוספנו את '5' לרשימת הפעולות התקינות ===
+            # הוספנו את '5' לרשימת הפעולות התקינות
             if op_str not in ['1', '2', '3', '4', '5']:
                 raise ValueError("פעולת חשבון לא תקינה")
 
@@ -39,7 +39,7 @@ def yemot_single_input_calculator_star():
                 else:
                     result = round(num1 / num2, 2)
                     result_text = str(result)
-            # === תיקון 2: תיקנו את טעות ההקלדה ל-result_text ===
+            # תיקנו את טעות ההקלדה והוספנו את החזקה
             elif op_str == "5": result_text = str(num1 ** num2)
 
             yemot_commands.append("id_list_message=t-התוצאה היא " + result_text)
