@@ -18,7 +18,7 @@ def yemot_calculator_simple_and_correct():
         if not digits:
             # פקודה פשוטה ונקייה: הודעה, שם משתנה, סוג=מספרים, מינימום=1, מקסימום=10
             # המערכת תשתמש בזמן ברירת המחדל שלה להמתנה (בדרך כלל 3-5 שניות)
-            yemot_commands.append("read=t-הקש את המספר הראשון וסולמית לסיום=digits,yes,1,10")
+            yemot_commands.append("read=t-שלום, הגעת למחשבון, אנא הקש מספר וסולמית לסיום=digits,yes,10,1")
         else:
             yemot_commands.append(f"go_to_folder=/yemot?step=2&num1={digits}")
 
