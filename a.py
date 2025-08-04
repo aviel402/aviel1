@@ -1,70 +1,56 @@
-# החלף את כל הקוד שלך בגרסה הפשוטה והנכונה הזו
+# גרסה סופית ומתוקנת המשתמשת בכוכבית (*) כמפריד
 
 from flask import Flask, request, Response
-from urllib.parse import urlencode
 
 app = Flask(__name__)
 
 @app.route('/yemot', methods=['POST', 'GET'])
-def yemot_calculator_simple_and_correct():
+def yemot_single_input_calculator_star():
     yemot_commands = []
     params = request.values
-
-    step = params.get("step", "1")
     digits = params.get("digits", "")
+
+    # אם המשתמש עוד לא הקיש כלום, נבקש ממנו את כל הקלט
+    if not digits:
+        # שינוי: החלפנו "סולמית" ב"כוכבית" בהנחיה למשתמש
+        prompt = "t-לחישוב, הקש מספר ראשון, כוכבית, פעולת חשבון, כוכבית, מספר שני, וכוכבית לסיום"
+        yemot_commands.append(f"read={prompt}=digits")
     
-    # שלב 1 – קבלת מספר ראשון
-    if step == "1":
-        if not digits:
-            # פקודה פשוטה ונקייה: הודעה, שם משתנה, סוג=מספרים, מינימום=1, מקסימום=10
-            # המערכת תשתמש בזמן ברירת המחדל שלה להמתנה (בדרך כלל 3-5 שניות)
-            yemot_commands.append("read=t-שלום, הגעת למחשבון, אנא הקש מספר וסולמית לסיום=digits,yes,10,1")
-        else:
-            yemot_commands.append(f"go_to_folder=/yemot?step=2&num1={digits}")
+    # אם קיבלנו קלט, ננסה לחשב אותו
+    else:
+        try:
+            # שינוי: נפרק את הקלט לפי כוכבית (*) במקום סולמית
+            parts = digits.split('*')
+            
+            if len(parts) != 3:
+                raise ValueError("קלט לא תקין")
 
-    # שלב 2 – קבלת פעולה
-    elif step == "2":
-        num1 = params.get("num1")
-        if not digits or digits not in ["1", "2", "3", "4"]:
-            next_url_params = urlencode({'step': '2', 'num1': num1})
-            next_url = f"/yemot?{next_url_params}"
-            # פקודה זו נכונה: מינימום 1 ומקסימום 1, כדי לקלוט רק ספרה אחת
-            yemot_commands.append(f"read=t-בחר את הפעולה=digits,yes,1,1,{next_url}")
-        else:
-            op = digits
-            yemot_commands.append(f"go_to_folder=/yemot?step=3&num1={num1}&op={op}")
+            num1_str, op_str, num2_str = parts
+            
+            if op_str not in ['1', '2', '3', '4']:
+                raise ValueError("פעולת חשבון לא תקינה")
 
-    # שלב 3 – קבלת מספר שני וחישוב
-    elif step == "3":
-        num1 = params.get("num1")
-        op = params.get("op")
-        
-        if not digits:
-            next_url_params = urlencode({'step': '3', 'num1': num1, 'op': op})
-            next_url = f"/yemot?{next_url_params}"
-            # אותה פקודה פשוטה כמו בשלב הראשון
-            yemot_commands.append(f"read=t-הקש את המספר השני וסולמית לסיום=digits,yes,1,10,{next_url}")
-        else:
-            try:
-                num2 = float(digits)
-                num1_float = float(num1)
-                result_text = "שגיאה"
-                
-                if op == "1": result_text = str(num1_float + num2)
-                elif op == "2": result_text = str(num1_float - num2)
-                elif op == "3": result_text = str(num1_float * num2)
-                elif op == "4":
-                    if num2 == 0: raise ZeroDivisionError
-                    result = round(num1_float / num2, 2)
+            num1 = float(num1_str)
+            num2 = float(num2_str)
+            result_text = "שגיאה"
+
+            if op_str == "1": result_text = str(num1 + num2)
+            elif op_str == "2": result_text = str(num1 - num2)
+            elif op_str == "3": result_text = str(num1 * num2)
+            elif op_str == "4":
+                if num2 == 0:
+                    result_text = "לא ניתן לחלק באפס"
+                else:
+                    result = round(num1 / num2, 2)
                     result_text = str(result)
+            
+            yemot_commands.append("id_list_message=t-התוצאה היא " + result_text)
 
-                yemot_commands.append("id_list_message=t-התוצאה היא " + result_text)
-                yemot_commands.append("go_to_folder=hangup")
-
-            except Exception as e:
-                print(f"ERROR: {e}, PARAMS: {params}") 
-                yemot_commands.append("id_list_message=t-אירעה שגיאה בחישוב")
-                yemot_commands.append("go_to_folder=hangup")
+        except Exception as e:
+            print(f"Error processing input '{digits}': {e}")
+            yemot_commands.append("id_list_message=t-הקלט שהוקש אינו תקין, אנא נסה שנית")
+        finally:
+            yemot_commands.append("go_to_folder=hangup")
 
     response_string = "&".join(yemot_commands)
     return Response(response_string, mimetype='text/plain; charset=UTF-8')
