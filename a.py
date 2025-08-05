@@ -1,11 +1,13 @@
-# גרסה חדשה של הראוטר, בנויה מחדש על בסיס הקוד היציב
+# קובץ: a.py
+# גרסה יציבה עם ראוטר, רשת ביטחון, ופונקציות נפרדות
 
 from flask import Flask, request, Response
 import datetime
+import os
 
 app = Flask(__name__)
 
-# --- אפליקציה מס' 1: המחשבון (מהגרסה האחרונה שעבדה) ---
+# --- אפליקציה מס' 1: המחשבון ---
 def handle_calculator(params):
     yemot_commands = []
     digits = params.get("digits", "")
@@ -51,7 +53,7 @@ def handle_calculator(params):
 def handle_time(params):
     yemot_commands = []
     
-    # אזור זמן ישראל (UTC+3 בקיץ)
+    # אזור זמן ישראל (UTC+3 בקיץ, יש להתאים לחורף אם צריך)
     tz = datetime.timezone(datetime.timedelta(hours=3))
     now = datetime.datetime.now(tz)
     hour = now.hour
@@ -78,18 +80,20 @@ def yemot_router():
         elif extension == '2':
             yemot_commands = handle_time(params)
         else:
-            # אם התקשרו משלוחה לא מוכרת
-            yemot_commands.append("id_list_message=t-שלוחה זו אינה מוגדרת במערכת")
+            yemot_commands.append("id_list_message=t-שלוחה זו אינה מוגדרת")
             yemot_commands.append("go_to_folder=hangup")
 
     except Exception as e:
-        # רשת ביטחון: אם משהו קורס, נדפיס את השגיאה ללוג ונשמיע הודעה
         print(f"FATAL ERROR IN ROUTER: {e}")
         yemot_commands = [
-            "id_list_message=t-אירעה שגיאה כללית בשרת, אנא נסה שנית במועד מאוחר יותר",
+            "id_list_message=t-אירעה שגיאה כללית בשרת",
             "go_to_folder=hangup"
         ]
 
-    # הרכבת התגובה הסופית ושליחתה
     response_string = "&".join(yemot_commands)
     return Response(response_string, mimetype='text/plain; charset=UTF-8')
+
+# --- קטע הרצה (לצורך התאמה לפלטפורמות אירוח) ---
+if __name__ == "__main__":
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port)
