@@ -1,10 +1,10 @@
-# קובץ: a.py
-# גרסה יציבה עם ראוטר, רשת ביטחון, ופונקציות נפרדות
+# קובץ: api/index.py
+# גרסה מותאמת במיוחד לסביבת Vercel, פשוטה ויציבה
 
 from flask import Flask, request, Response
 import datetime
-import os
 
+# חשוב: שם המשתנה חייב להיות app
 app = Flask(__name__)
 
 # --- אפליקציה מס' 1: המחשבון ---
@@ -32,6 +32,7 @@ def handle_calculator(params):
             result_text = "שגיאה"
 
             if op_str == "1": result_text = str(num1 + num2)
+            # ... (שאר הקוד של המחשבון נשאר זהה) ...
             elif op_str == "2": result_text = str(num1 - num2)
             elif op_str == "3": result_text = str(num1 * num2)
             elif op_str == "4":
@@ -40,7 +41,7 @@ def handle_calculator(params):
                 else:
                     result_text = str(round(num1 / num2, 2))
             elif op_str == "5": result_text = str(num1 ** num2)
-            
+
             yemot_commands.append("id_list_message=t-התוצאה היא " + result_text)
         except Exception:
             yemot_commands.append("id_list_message=t-הקלט שהוקש אינו תקין")
@@ -52,14 +53,9 @@ def handle_calculator(params):
 # --- אפליקציה מס' 2: השעון ---
 def handle_time(params):
     yemot_commands = []
-    
-    # אזור זמן ישראל (UTC+3 בקיץ, יש להתאים לחורף אם צריך)
     tz = datetime.timezone(datetime.timedelta(hours=3))
     now = datetime.datetime.now(tz)
-    hour = now.hour
-    minute = now.minute
-    
-    time_str = f"t-השעה כעת היא {hour} ו {minute} דקות"
+    time_str = f"t-השעה כעת היא {now.hour} ו {now.minute} דקות"
     
     yemot_commands.append(f"id_list_message={time_str}")
     yemot_commands.append("go_to_folder=hangup")
@@ -67,8 +63,9 @@ def handle_time(params):
     return yemot_commands
 
 # --- הנתב הראשי ---
-@app.route('/yemot-router', methods=['POST', 'GET'])
-def yemot_router():
+# Vercel תריץ אוטומטית את הפונקציה הזו כשיפנו לכתובת הראשית
+@app.route('/', methods=['POST', 'GET'])
+def main_router():
     try:
         params = request.values
         extension = params.get("ApiExtension", "")
@@ -85,15 +82,7 @@ def yemot_router():
 
     except Exception as e:
         print(f"FATAL ERROR IN ROUTER: {e}")
-        yemot_commands = [
-            "id_list_message=t-אירעה שגיאה כללית בשרת",
-            "go_to_folder=hangup"
-        ]
-
+        yemot_commands = ["id_list_message=t-אירעה שגיאה כללית בשרת"]
+    
     response_string = "&".join(yemot_commands)
     return Response(response_string, mimetype='text/plain; charset=UTF-8')
-
-# --- קטע הרצה (לצורך התאמה לפלטפורמות אירוח) ---
-if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port)
