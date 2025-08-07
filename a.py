@@ -6,4 +6,4 @@ app = Flask(__name__)
 @app.route('/yemot', methods=['POST', 'GET'])
 
 params = request.values
-print(params)
+print(-t params)
