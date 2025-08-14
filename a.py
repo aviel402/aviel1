@@ -22,7 +22,7 @@ def flask_controller():
 # B
 def yemot_service(request_params):
     x = request_params.get("x")
-    if x == 1:
+    if x == "1":
         a()
     #
     #
