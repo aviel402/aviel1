@@ -21,8 +21,7 @@ def flask_controller():
 
 # B
 def yemot_service(request_params):
-    print("-t ברוך הבא למחשבון, אנא הקש את המספר הראשון record_digits=yes")
-    x = "1"
+    x = request_params.get("x")
     if x == "1":
         a()
     #
