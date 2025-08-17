@@ -39,7 +39,7 @@ def yemot_service(request_params):
     #     return other_function(request_params)
 
     # אם לא נמצאה פונקציה מתאימה
-    return "id_list_message=t-פעולה לא מוגדרת"
+    return "id_list_message=-tפעולה לא מוגדרת"
 
 
 
@@ -107,4 +107,4 @@ def a(params):
         return f"id_list_message=-t התוצאה היא {d}"
 
     # אם מסיבה כלשהי הגענו לשלב לא מוכר
-    return "id_list_message=t-שגיאה לא צפויה במערכת"
+    return "id_list_message=-tשגיאה לא צפויה במערכת"
