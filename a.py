@@ -61,7 +61,7 @@ def a(params):
     # --- שלב 1: בקשת המספר הראשון ---
     if step == "1":
         prompt = "t-  ברוך הבא למחשבון, אנא הקש את המספר הראשון"
-        return_path = f"/?x=1&/?step=2"
+        return_path = f"/?x=1&step=2"
         return f"read={prompt}=num1,,,{return_path}"
         
     # --- שלב 2: בקשת פעולה ---
