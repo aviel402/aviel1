@@ -2,104 +2,51 @@ from flask import Flask, request, Response
 from urllib.parse import urlencode
 
 # =======================================================
-#             חלק A (ה-Controller)
+#             חלק A (כפי שהגדרת)
 # =======================================================
-
 app = Flask(__name__)
-
 @app.route('/', methods=['POST', 'GET'])
 def flask_controller():
     all_params = request.values
     final_response_string = yemot_service(all_params)
     return Response(final_response_string, mimetype='text/plain; charset=UTF-8')
 
-
-
-
-
-
-
-
-
-
-
 # =======================================================
-#             חלק B (המנתב - Router)
+#             חלק B (כפי שהגדרת)
 # =======================================================
-
 def yemot_service(request_params):
     x = request_params.get("x")
     if x == "1":
-        return a(request_params)
-    
-    return "id_list_message=t-פעולה לא מוגדרת"
-
-
-
-
-
-
-
-
-
-
+        return a_debugger(request_params)
+    return "id_list_message=t-פעולה לא מוגדרת (x was not 1)"
 
 # =======================================================
-#        חלק C (פונקציה 'a') - עם התיקון הסופי
+#        חלק C (פונקציה 'a') - גרסת בלש פשוטה
 # =======================================================
-def a(params):
+def a_debugger(params):
     
-    # **** כאן נמצא התיקון הקריטי ****
-    # הקוד יחפש גם 'step' וגם 'STEP'. הוא ימצא את מה שנשלח.
+    # 1. נדפיס את כל מה שקיבלנו, כדי לראות את האמת
+    print("--- NEW REQUEST RECEIVED ---")
+    print(f"FULL PARAMS: {params}")
+    
+    # 2. נבדוק באיזה שלב אנחנו *באמת*
     step = params.get("step", params.get("STEP", "1"))
+    print(f"DETECTED STEP: {step}")
 
-    # --- שלב 1: בקשת המספר הראשון ---
+    # --- שלב 1: אם זו הפנייה הראשונה ---
     if step == "1":
-        prompt = "t-ברוך הבא למחשבון, אנא הקש את המספר הראשון"
-        return_path = f"/?x=1&step=2" # אנחנו תמיד נשלח באותיות קטנות מכאן והלאה
-        return f"read={prompt}=num1,,,{return_path}"
+        print("LOGIC: This is STEP 1. Preparing command for STEP 2.")
         
-    # --- שלב 2: בקשת פעולה ---
-    elif step == "2":
-        num1_from_user = params.get("num1")
-        prompt = "t-אנא הקש פעולה, חיבור,1, חיסור, 2, כפל, 3, חילוק, 4, חזקה, 5"
-        return_path_params = urlencode({'x': '1', 'step': '3', 'saved_num1': num1_from_user})
-        return_path = f"/?{return_path_params}"
-        return f"read={prompt}=op,,1,1,{return_path}"
-
-    # --- שלב 3: בקשת מספר שני ---
-    elif step == "3":
-        num1_saved = params.get("saved_num1")
-        op_saved = params.get("op")
-        prompt = "t-אנא הקש את המספר השני"
-        return_path_params = urlencode({'x': '1', 'step': '4', 'saved_num1': num1_saved, 'saved_op': op_saved})
-        return_path = f"/?{return_path_params}"
-        return f"read={prompt}=num2,,,{return_path}"
+        prompt = "t-זהו ניסוי. אנא הקש את הספרה 5"
+        # נבנה את כתובת החזרה ונראה אותה בלוג
+        return_path = f"/?x=1&step=2"
+        print(f"LOGIC: Return path is: {return_path}")
         
-    # --- שלב 4: ביצוע החישוב והשמעת התוצאה ---
-    elif step == "4":
-        a_str = params.get("saved_num1")
-        b_str = params.get("saved_op")
-        c_str = params.get("num2")
-        d = ""
+        # נחזיר את פקודת ה-read
+        return f"read={prompt}=debug_input,,1,1,{return_path}"
         
-        try:
-            a = float(a_str)
-            b = b_str
-            c = float(c_str)
-            
-            if b == '1': d = a + c
-            elif b == '2': d = a - c
-            elif b == '3': d = a * c
-            elif b == '4':
-                if c != 0: d = round(a / c, 2)
-                else: d = "אי אפשר לחלק באפס"
-            elif b == '5': d = a ** c
-            else: d = "פעולה לא חוקית"
-        except:
-            d = "שגיאה בערכים שהוקשו"
-
-        return f"id_list_message=t-התוצאה היא {d}"
-
-    # אם מסיבה כלשהי הגענו לשלב לא מוכר
-    return "id_list_message=t-שגיאה לא צפויה במערכת"
+    # --- שלב 2: אם זו הפנייה השנייה ---
+    else:
+        print("LOGIC: This should be STEP 2.")
+        user_input = params.get("debug_input")
+        return f"id_list_message=t-הגעת לשלב השני. הקלט היה {user_input}"
