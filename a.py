@@ -1,81 +1,32 @@
 from flask import Flask, request, Response
 from urllib.parse import urlencode
 
-# =======================================================
-#             חלק A (עם תיקון Cookie)
-# =======================================================
-
 app = Flask(__name__)
-
 @app.route('/', methods=['POST', 'GET'])
-def flask_controller():
-    # קבלת הנתונים כמו קודם
-    all_params = request.form if request.form else request.args
+def diagnostic_tool():
+    # שלב א': מתעדים הכל. תמיד.
+    print("--- NEW YEMOT REQUEST RECEIVED ---")
+    print(f"REQUEST METHOD: {request.method}") # נראה אם זה GET או POST
+    # נבדוק את כל המקומות האפשריים שבהם הפרמטרים יכולים להיות
+    print(f"PARAMS FROM 'form' (POST): {request.form.to_dict()}")
+    print(f"PARAMS FROM 'args' (GET): {request.args.to_dict()}")
+
+    # שלב ב': מאחדים את הפרמטרים למילון אחד, לא משנה איך הם הגיעו
+    params = request.form if request.method == 'POST' else request.args
+    step = params.get("step", "1")
     
-    # הפעלת הלוגיקה
-    final_response_string = yemot_service(all_params)
+    print(f"--- DIAGNOSTIC: Detected STEP is '{step}' ---")
 
-    # יצירת אובייקט התגובה המלא
-    response = Response(final_response_string, mimetype='text/plain; charset=UTF-8')
-
-    # **** כאן נמצא התיקון הקריטי ****
-    # נשמור באופן מפורש את מזהה השיחה ב-Cookie
-    # כדי לוודא שימות המשיח ממשיכה את אותה שיחה
-    if 'ApiCallId' in all_params:
-        response.set_cookie('session', all_params['ApiCallId'])
-        
-    return response
-
-# =======================================================
-#             חלק B (כמו קודם)
-# =======================================================
-def yemot_service(request_params):
-    x = request_params.get("x")
-    if x == "1":
-        return a(request_params)
-    return "id_list_message=t-פעולה לא מוגדרת"
-
-# =======================================================
-#        חלק C (כמו קודם, עם התיקון של STEP)
-# =======================================================
-def a(params):
-    step = params.get("step", params.get("STEP", "1"))
-
-    # שלב 1: בקשת המספר הראשון
+    # שלב ג': לוגיקת הבדיקה הפשוטה
     if step == "1":
-        prompt = "t-ברוך הבא למחשבון, אנא הקש את המספר הראשון"
-        return_path_params = urlencode({'x': '1', 'step': '2'})
-        return_path = f"/?{return_path_params}"
-        return f"read={prompt}=num1,,,{return_path}"
+        print("--- DIAGNOSTIC: Executing STEP 1 logic. Preparing command for STEP 2.")
+        prompt = "t-זהו מבחן תקשורת. אנא הקש את הספרה חמש"
+        return_path = f"/?x=1&step=2"
+        response_str = f"read={prompt}=test_input,,1,1,{return_path}"
+    else: # step is "2" or something else
+        user_input = params.get("test_input")
+        print("--- DIAGNOSTIC: Executing STEP 2 logic.")
+        response_str = f"id_list_message=t-הצלחה. הגעת לשלב השני. הקלט היה {user_input}&go_to_folder=hangup"
         
-    # שלב 2: בקשת פעולה
-    elif step == "2":
-        num1_from_user = params.get("num1")
-        prompt = "t-אנא הקש פעולה"
-        return_path_params = urlencode({'x': '1', 'step': '3', 'saved_num1': num1_from_user})
-        return_path = f"/?{return_path_params}"
-        return f"read={prompt}=op,,1,1,{return_path}"
-    
-    # שלב 3: בקשת מספר שני
-    elif step == "3":
-        num1_saved = params.get("saved_num1")
-        op_saved = params.get("op")
-        prompt = "t-אנא הקש מספר שני"
-        return_path_params = urlencode({'x': '1', 'step': '4', 'saved_num1': num1_saved, 'saved_op': op_saved})
-        return_path = f"/?{return_path_params}"
-        return f"read={prompt}=num2,,,{return_path}"
-        
-    # שלב 4: ביצוע החישוב
-    elif step == "4":
-        a_str, b_str, c_str = params.get("saved_num1"), params.get("saved_op"), params.get("num2")
-        d = ""
-        try:
-            a, b, c = float(a_str), b_str, float(c_str)
-            if b == '1': d = a + c
-            # ... שאר הלוגיקה ...
-            else: d = "פעולה לא חוקית"
-        except:
-            d = "שגיאה"
-        return f"id_list_message=t-התוצאה היא {d}"
-
-    return "id_list_message=t-שגיאה"
+    print(f"--- DIAGNOSTIC: Sending back to Yemot: '{response_str}'")
+    return Response(response_str, mimetype='text/plain')
