@@ -48,18 +48,24 @@ def yemot_service(request_params):
 
 
 
-
 # =======================================================
-#        חלק C (המחשבון המלא)
+#        חלק C (פונקציה 'a') - עם תיקון עקביות
 # =======================================================
 def a(params):
     
+    from urllib.parse import urlencode
+
     step = params.get("step", params.get("STEP", "1"))
 
     # --- שלב 1: בקשת המספר הראשון ---
     if step == "1":
         prompt = "t-ברוך הבא למחשבון, אנא הקש את המספר הראשון"
-        return_path = f"/?x=1&step=2"
+        
+        # **** התיקון הקריטי נמצא כאן ****
+        # משתמשים ב-urlencode בדיוק כמו בשאר השלבים
+        return_path_params = urlencode({'x': '1', 'step': '2'})
+        return_path = f"/?{return_path_params}"
+        
         return f"read={prompt}=num1,,,{return_path}"
         
     # --- שלב 2: בקשת פעולה ---
