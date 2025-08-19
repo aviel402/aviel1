@@ -30,16 +30,9 @@ def flask_controller():
 def yemot_service(request_params):
     x = request_params.get("x")
     if x == "1":
-        # קריאה לפונקציית המחשבון
         return a(request_params)
     
-    # הוסף כאן בעתיד עוד תנאים לערכים אחרים של x
-    # לדוגמה:
-    # if x == "2":
-    #     return other_function(request_params)
-
-    # אם לא נמצאה פונקציה מתאימה
-    return "id_list_message=t- פעולה לא מוגדרת"
+    return "id_list_message=t-פעולה לא מוגדרת"
 
 
 
@@ -52,22 +45,24 @@ def yemot_service(request_params):
 
 
 # =======================================================
-#        חלק C (פונקציה 'a') - הלוגיקה של המחשבון הרב-שלבי
+#        חלק C (פונקציה 'a') - עם התיקון הסופי
 # =======================================================
 def a(params):
     
-    step = params.get("step", "1")
+    # **** כאן נמצא התיקון הקריטי ****
+    # הקוד יחפש גם 'step' וגם 'STEP'. הוא ימצא את מה שנשלח.
+    step = params.get("step", params.get("STEP", "1"))
 
     # --- שלב 1: בקשת המספר הראשון ---
     if step == "1":
-        prompt = "t-  ברוך הבא למחשבון, אנא הקש את המספר הראשון"
-        return_path = f"?x=1&step=2"
+        prompt = "t-ברוך הבא למחשבון, אנא הקש את המספר הראשון"
+        return_path = f"/?x=1&step=2" # אנחנו תמיד נשלח באותיות קטנות מכאן והלאה
         return f"read={prompt}=num1,,,{return_path}"
         
     # --- שלב 2: בקשת פעולה ---
     elif step == "2":
         num1_from_user = params.get("num1")
-        prompt = "t-  אנא הקש פעולה, חיבור,1, חיסור, 2, כפל, 3, חילוק, 4, חזקה, 5"
+        prompt = "t-אנא הקש פעולה, חיבור,1, חיסור, 2, כפל, 3, חילוק, 4, חזקה, 5"
         return_path_params = urlencode({'x': '1', 'step': '3', 'saved_num1': num1_from_user})
         return_path = f"/?{return_path_params}"
         return f"read={prompt}=op,,1,1,{return_path}"
@@ -76,7 +71,7 @@ def a(params):
     elif step == "3":
         num1_saved = params.get("saved_num1")
         op_saved = params.get("op")
-        prompt = "t-  אנא הקש את המספר השני"
+        prompt = "t-אנא הקש את המספר השני"
         return_path_params = urlencode({'x': '1', 'step': '4', 'saved_num1': num1_saved, 'saved_op': op_saved})
         return_path = f"/?{return_path_params}"
         return f"read={prompt}=num2,,,{return_path}"
@@ -104,7 +99,7 @@ def a(params):
         except:
             d = "שגיאה בערכים שהוקשו"
 
-        return f"id_list_message=t-  התוצאה היא {d}"
+        return f"id_list_message=t-התוצאה היא {d}"
 
     # אם מסיבה כלשהי הגענו לשלב לא מוכר
-    return "id_list_message=t- שגיאה לא צפויה במערכת"
+    return "id_list_message=t-שגיאה לא צפויה במערכת"
